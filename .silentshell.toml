@@ -1,0 +1,14 @@
+ignore-paths = [".venv"]
+
+[container]
+name             = "iterm2-background-cycler"
+image_name       = "iterm2-background-cycler_silentshell_env"
+image_dockerfile = "./config/silentshell.Dockerfile"
+image_user       = "mary"
+
+[container.volumes]
+"~/.claude"      = "/home/mary/.claude"
+"~/.claude.json" = "/home/mary/.claude.json"
+
+[env]
+PYTHONDONTWRITEBYTECODE = "1"

@@ -10,6 +10,7 @@ Automatically cycle through a collection of background images in iTerm2.
 - Native macOS file picker to choose images.
 - Automatically cycles selected images in the background at a 5 minute interval.
 - Manual controls to skip forward/backward at any time.
+- Shuffle to randomize the order for the current session.
 
 ## Installation
 
@@ -64,12 +65,13 @@ right clicking on a terminal.
 
 ### Menu Commands
 
-| Command                    | Description                            |
-| -------------------------- | -------------------------------------- |
-| **Cycler: Add Images**     | Add more images to existing collection |
-| **Cycler: Next Image**     | Manually skip to next background       |
-| **Cycler: Previous Image** | Go back to previous background         |
-| **Cycler: Clear Images**   | Remove all backgrounds                 |
+| Command                      | Description                                              |
+| ---------------------------- | -------------------------------------------------------- |
+| **Cycler: Add Images**       | Add more images to existing collection                   |
+| **Cycler: Next Image**       | Manually skip to next background                         |
+| **Cycler: Previous Image**   | Go back to previous background                           |
+| **Cycler: Shuffle Images**   | Randomize image order for this session (not persisted)   |
+| **Cycler: Clear Images**     | Remove all backgrounds                                   |
 
 ## Configuration Files
 

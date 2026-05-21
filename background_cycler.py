@@ -11,6 +11,7 @@ Installation:
 """
 
 import iterm2
+import random
 from iterm2.profile import LocalWriteOnlyProfile
 from iterm2.registration import ContextMenuProviderRPC
 from iterm2.app import async_get_app, App
@@ -35,6 +36,7 @@ def get_unique_id(name: str) -> str:
 
 class BackgroundCycler:
     app: App
+    images_persist: list[str]
     images: list[str]
     current_index: int | None
     enabled: bool
@@ -42,6 +44,7 @@ class BackgroundCycler:
 
     def __init__(self, app: App):
         self.app = app
+        self.images_persist = []
         self.images = []
         self.current_index = None
         self.enabled = DEFAULT_ENABLED
@@ -74,7 +77,8 @@ class BackgroundCycler:
         if IMAGES_FILE.exists():
             try:
                 with open(IMAGES_FILE, "r") as f:
-                    self.images = json.load(f)
+                    self.images_persist = json.load(f)
+                    self.images = list(self.images_persist)
             except Exception as e:
                 print(f"Error loading images: {e}")
 
@@ -85,7 +89,15 @@ class BackgroundCycler:
         """Save image list to file"""
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         with open(IMAGES_FILE, "w") as f:
-            json.dump(self.images, f, indent=2)
+            json.dump(self.images_persist, f, indent=2)
+
+    async def refresh_background(self):
+        if not self.images or self.current_index is None:
+            # Nothing to do
+            return
+
+        current_image = self.images[self.current_index]
+        await self.set_background(current_image)
 
     async def set_background(self, image_path: str):
         """Set background image for all sessions"""
@@ -162,6 +174,31 @@ class BackgroundCycler:
         self.save_config()
         minutes = self.interval / 60
         return f"Interval set to {minutes:.1f} minutes"
+
+    def add_images(self, paths: list[str]) -> int:
+        new_images = [p for p in paths if p not in self.images_persist]
+        self.images_persist.extend(new_images)
+        self.images.extend(new_images)
+        self.save_images()
+        return len(new_images)
+
+    async def clear_images(self):
+        self.images_persist = []
+        self.images = []
+        self.current_index = None
+        self.save_images()
+        await self.set_background("")
+
+    async def shuffle(self):
+        """Randomize the session image order and reset to the first image"""
+        if not self.images:
+            return "No images to shuffle"
+
+        random.shuffle(self.images)
+        self.current_index = self._get_next_available_index(start_idx=0)
+        await self.refresh_background()
+
+        return f"Shuffled {len(self.images)} images"
 
     def get_status(self):
         """Get current status"""
@@ -297,6 +334,26 @@ async def show_alert(title, message):
         print(f"Error showing alert: {e}")
 
 
+async def confirm_alert(title, message) -> bool:
+    """Show a macOS confirmation dialog, returns True if the user confirmed"""
+    applescript = f"""
+    tell application "iTerm2"
+        activate
+        set result to button returned of (display dialog "{message}" with title "{title}" buttons {{"Cancel", "OK"}} default button "Cancel")
+        return result
+    end tell
+    """
+
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", applescript], capture_output=True, text=True, timeout=60
+        )
+        return result.returncode == 0 and result.stdout.strip() == "OK"
+    except Exception as e:
+        print(f"Error showing confirm dialog: {e}")
+        return False
+
+
 async def main(connection):
     app = await async_get_app(connection)
     if not app:
@@ -313,20 +370,21 @@ async def main(connection):
     async def add_images():
         paths = await select_images_ui()
         if paths:
-            new_images = [p for p in paths if p not in cycler.images]
-            cycler.images.extend(new_images)
-            cycler.save_images()
-            await show_alert("Success", f"Added {len(new_images)} new images")
-            return f"Added {len(new_images)} new images"
+            count = cycler.add_images(paths)
+            await show_alert("Success", f"Added {count} new images")
+            return f"Added {count} new images"
         return "No images selected"
 
     # RPC: Clear all images
     @ContextMenuProviderRPC
     async def clear_images():
-        cycler.images = []
-        cycler.current_index = None
-        cycler.save_images()
-        await cycler.set_background("")
+        confirmed = await confirm_alert(
+            "Clear Images",
+            "Are you sure? This will remove your settings for all background images.",
+        )
+        if not confirmed:
+            return "Cancelled image clearing"
+        await cycler.clear_images()
         return "All images cleared"
 
     # RPC: Next image
@@ -338,6 +396,11 @@ async def main(connection):
     @ContextMenuProviderRPC
     async def previous_image():
         return await cycler.previous_image()
+
+    # RPC: Shuffle images
+    @ContextMenuProviderRPC
+    async def shuffle_images():
+        return await cycler.shuffle()
 
     # Register all RPC calls with display names so they appear in the Scripts menu
     await add_images.async_register(
@@ -360,6 +423,11 @@ async def main(connection):
         connection,
         display_name="Cycler: Previous Image",
         unique_identifier=get_unique_id("previous_image"),
+    )
+    await shuffle_images.async_register(
+        connection,
+        display_name="Cycler: Shuffle Images",
+        unique_identifier=get_unique_id("shuffle_images"),
     )
 
     print("Background Cycler started! Access via Scripts > Background Cycler")

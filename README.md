@@ -3,16 +3,16 @@ the original generation has been reviewed and edited by a human, me :)._
 
 # iTerm2 Background Image Cycler
 
-Automatically cycle through a collection of background images in iTerm2 with full UI controls.
+Automatically cycle through a collection of background images in iTerm2.
 
 ## Features
 
 ![screenshot](./docs/screenshot.png)
 
-- **Auto-cycling** - Automatically rotates through your images at a configurable interval
-- **Easy image selection** - Native macOS file picker to choose images
-- **Manual controls** - Skip forward/backward through images anytime
-- **Persistent config** - Your settings and image list survive restarts
+- Low footprint.
+- Native macOS file picker to choose images.
+- Automatically cycles selected images in the background at a 5 minute interval.
+- Manual controls to skip forward/backward at any time.
 
 ## Installation
 
@@ -25,7 +25,11 @@ Automatically cycle through a collection of background images in iTerm2 with ful
    ```
 
 2. Restart iTerm2
-3. Done! 🎉
+3. Make sure **Scripts** > **AutoLaunch** > **background_cycler.py** is checked.
+
+   ![Scripts AutoLaunch menu](./docs/start_script_screenshot.png)
+
+4. Done! 🎉
 
 ### Manual Install
 
@@ -44,6 +48,11 @@ Automatically cycle through a collection of background images in iTerm2 with ful
    ```
 
 3. Restart iTerm2
+4. Make sure **Scripts** > **AutoLaunch** > **background_cycler.py** is checked.
+
+   ![Scripts AutoLaunch menu](./docs/start_script_screenshot.png)
+
+5. Done! 🎉
 
 ## Usage
 
@@ -76,7 +85,7 @@ You can manually edit these files if needed.
 
 ## Development
 
-This project uses [silentshell](https://github.com/souldzin/silentshell) for running Claude Code in a containerized environment. The relevant files are:
+This project uses [silentshell](https://github.com/souldzin/silentshell) for running coding agents in a containerized environment. The relevant files are:
 
 - `.silentshell.toml` — container name, image config, volume mounts, and env vars
 - `config/silentshell.Dockerfile` — the container image definition

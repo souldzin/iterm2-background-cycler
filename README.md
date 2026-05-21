@@ -1,6 +1,3 @@
-_AI Disclaimer: The first draft of this was created from AI generation. 100% of
-the original generation has been reviewed and edited by a human, me :)._
-
 # iTerm2 Background Image Cycler
 
 Automatically cycle through a collection of background images in iTerm2.
@@ -89,6 +86,10 @@ This project uses [silentshell](https://github.com/souldzin/silentshell) for run
 
 - `.silentshell.toml` — container name, image config, volume mounts, and env vars
 - `config/silentshell.Dockerfile` — the container image definition
+
+## Notes
+
+_AI Disclaimer: The first draft of this was created from AI generation. 100% of the original generation has been reviewed, changed, and edited by a human - me :)._
 
 ## License
 

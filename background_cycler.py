@@ -175,11 +175,15 @@ class BackgroundCycler:
         minutes = self.interval / 60
         return f"Interval set to {minutes:.1f} minutes"
 
-    def add_images(self, paths: list[str]) -> int:
+    async def add_images(self, paths: list[str]) -> int:
+        had_images = bool(self.images)
         new_images = [p for p in paths if p not in self.images_persist]
         self.images_persist.extend(new_images)
         self.images.extend(new_images)
         self.save_images()
+        if not had_images:
+            self.current_index = self._get_next_available_index(start_idx=0)
+            await self.refresh_background()
         return len(new_images)
 
     async def clear_images(self):
@@ -370,7 +374,7 @@ async def main(connection):
     async def add_images():
         paths = await select_images_ui()
         if paths:
-            count = cycler.add_images(paths)
+            count = await cycler.add_images(paths)
             await show_alert("Success", f"Added {count} new images")
             return f"Added {count} new images"
         return "No images selected"
